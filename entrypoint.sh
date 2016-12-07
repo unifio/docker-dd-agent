@@ -130,12 +130,14 @@ find /checks.d -name '*.py' -exec cp {} /etc/dd-agent/checks.d \;
 
 export PATH="/opt/datadog-agent/embedded/bin:/opt/datadog-agent/bin:$PATH"
 
-if [[ ${CONSUL_PREFIX} && ${ENABLE_INTEGRATIONS} ]]; then
+if [[ ${CONSUL_PREFIX} && "${ENABLE_INTEGRATIONS}" ]]; then
 	if ${TOOLS_PREFIX}/consul kv get -keys "${CONSUL_PREFIX}"/integrations/ &>/dev/null; then
 		for integration in $(${TOOLS_PREFIX}/consul kv get -keys "${CONSUL_PREFIX}"/integrations/); do
 			THIS_INTEGRATION=$(echo "${integration}" | awk -F '/' '{print $NF}')
 			if [[ ! -z "${THIS_INTEGRATION}" ]]; then
-				${TOOLS_PREFIX}/consul kv get "${integration}" > "${INTEGRATION_DIR}"/"${THIS_INTEGRATION}".yaml
+                if [[ ${ENABLE_INTEGRATIONS} == *"${THIS_INTEGRATION}"* ]]; then
+                    ${TOOLS_PREFIX}/consul kv get "${integration}" > "${INTEGRATION_DIR}"/"${THIS_INTEGRATION}".yaml
+                fi
 			fi
 		done 
 	fi

@@ -1,6 +1,6 @@
 machine:
   environment:
-    DOCKER_DD_AGENT_VERSION: 5.10.1
+    DOCKER_DD_AGENT_VERSION: 5.10.1.1
   services:
     - docker
 

@@ -38,8 +38,8 @@ By default the agent container will use the `Name` field found in the `docker in
 ### Environment variables
 
 Some configuration parameters can be changed with environment variables:
-* `ENABLE_INTEGRATIONS` enable consul integration retrieval from KV store. To enable `-e ENABLE_INTEGRATIONS=yes` 
-* `CONSUL_PREFIX` sets the KV prefix to use for integration templates when `ENABLE_INTEGRATIONS` is on. Will be used by `consul get kv` inside container to retrieve available integrations from a consul server in key `integrations`. (Setting example  `-e CONSUL_PREFIX=/config/datadog/prod`)
+* `ENABLE_INTEGRATIONS` enable consul integration retrieval from KV store for comma separated list of available integrations. To enable `-e ENABLE_INTEGRATIONS=fluentd,consul,process,http_check` 
+* `CONSUL_PREFIX` sets the KV prefix to use for integration templates when `ENABLE_INTEGRATIONS` is on. Will be used by `consul get kv` inside container to retrieve available integrations that match the values in `ENABLE_INTEGRATIONS` from a consul server in key `integrations`. (Setting example  `-e CONSUL_PREFIX=/config/datadog/prod`)
 * `AWS_SECURITY_GROUPS` enables aws security group tagging. Only valid if ec2 tags are enabled and aws integration is enabled. To enable `-e AWS_SECURITY_GROUPS=yes`. 
 * `CONSUL_HTTP_ADDR` sets the consul server address the default is `127.0.0.1:8500`.   
 * `DD_HOSTNAME` set the hostname (write it in `datadog.conf`)
