@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 #set -e
-
+# Get all of the datadog configuration files.
+export TOOLS_PREFIX=/usr/local/bin
+export INTEGRATION_DIR=/etc/dd-agent/conf.d
 if [[ $DD_API_KEY ]]; then
   export API_KEY=${DD_API_KEY}
 fi
@@ -127,6 +129,21 @@ find /conf.d -name '*.yaml' -exec cp --parents {} /etc/dd-agent \;
 find /checks.d -name '*.py' -exec cp {} /etc/dd-agent/checks.d \;
 
 export PATH="/opt/datadog-agent/embedded/bin:/opt/datadog-agent/bin:$PATH"
+
+if [[ ${CONSUL_PREFIX} && ${ENABLE_INTEGRATIONS} ]]; then
+	if ${TOOLS_PREFIX}/consul kv get -keys "${CONSUL_PREFIX}"/integrations/ &>/dev/null; then
+		for integration in $(${TOOLS_PREFIX}/consul kv get -keys "${CONSUL_PREFIX}"/integrations/); do
+			THIS_INTEGRATION=$(echo "${integration}" | awk -F '/' '{print $NF}')
+			if [[ ! -z "${THIS_INTEGRATION}" ]]; then
+				${TOOLS_PREFIX}/consul kv get "${integration}" > "${INTEGRATION_DIR}"/"${THIS_INTEGRATION}".yaml
+			fi
+		done 
+	fi
+fi
+
+if [[ ${AWS_SECURITY_GROUPS} ]]; then
+	sed -i -r -e "s/^# ?collect_security_groups.*$/collect_security_groups: ${AWS_SECURITY_GROUPS}/" /etc/dd-agent/datadog.conf
+fi
 
 if [[ $DOGSTATSD_ONLY ]]; then
         echo "[WARNING] This option is deprecated as of agent 5.8.0, it will be removed in the next few versions. Please use the dogstatsd image instead."

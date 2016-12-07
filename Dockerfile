@@ -1,49 +1,24 @@
-FROM debian:jessie
+FROM datadog/docker-dd-agent
+MAINTAINER Unif.io, Inc. <support@unif.io>
 
-MAINTAINER Datadog <package@datadoghq.com>
+ENV CONSUL_VERSION=0.7.1
+ENV CONSULTEMPLATE_VERSION=0.16.0
 
-ENV DOCKER_DD_AGENT=yes \
-    AGENT_VERSION=1:5.10.1-1
+RUN apt-get update && \
+    apt-get -y install curl unzip && \
+    mkdir -p /tmp/build && \
+    cd /tmp/build && \
+    curl -s --output consul_${CONSUL_VERSION}_linux_amd64.zip https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip && \
+    curl -s --output consul_${CONSUL_VERSION}_SHA256SUMS https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_SHA256SUMS && \
+    curl -s --output consul_${CONSUL_VERSION}_SHA256SUMS.sig https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_SHA256SUMS.sig && \
+    gpg --keyserver keys.gnupg.net --recv-keys 91A6E7F85D05C65630BEF18951852D87348FFC4C && \
+    gpg --batch --verify consul_${CONSUL_VERSION}_SHA256SUMS.sig consul_${CONSUL_VERSION}_SHA256SUMS && \
+    grep consul_${CONSUL_VERSION}_linux_amd64.zip consul_${CONSUL_VERSION}_SHA256SUMS | sha256sum -c && \
+    unzip -d /usr/local/bin consul_${CONSUL_VERSION}_linux_amd64.zip && \
+    cd /tmp && \
+    rm -rf /tmp/build
 
-# Install the Agent
-RUN echo "deb http://apt.datadoghq.com/ stable main" > /etc/apt/sources.list.d/datadog.list \
- && apt-key adv --keyserver keyserver.ubuntu.com --recv-keys C7A7DA52 \
- && apt-get update \
- && apt-get install --no-install-recommends -y datadog-agent="${AGENT_VERSION}" \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
-# Configure the Agent
-# 1. Listen to statsd from other containers
-# 2. Turn syslog off
-# 3. Remove dd-agent user from supervisor configuration
-# 4. Remove dd-agent user from init.d configuration
-# 5. Fix permission on /etc/init.d/datadog-agent
-# 6. Remove network check
-RUN mv /etc/dd-agent/datadog.conf.example /etc/dd-agent/datadog.conf \
- && sed -i -e"s/^.*non_local_traffic:.*$/non_local_traffic: yes/" /etc/dd-agent/datadog.conf \
- && sed -i -e"s/^.*log_to_syslog:.*$/log_to_syslog: no/" /etc/dd-agent/datadog.conf \
- && sed -i "/user=dd-agent/d" /etc/dd-agent/supervisor.conf \
- && sed -i 's/AGENTUSER="dd-agent"/AGENTUSER="root"/g' /etc/init.d/datadog-agent \
- && chmod +x /etc/init.d/datadog-agent \
- && rm /etc/dd-agent/conf.d/network.yaml.default
-
-# Add Docker check
-COPY conf.d/docker_daemon.yaml /etc/dd-agent/conf.d/docker_daemon.yaml
-
-COPY entrypoint.sh /entrypoint.sh
-
-# Extra conf.d and checks.d
-VOLUME ["/conf.d", "/checks.d"]
-
-# Expose DogStatsD and supervisord ports
-EXPOSE 8125/udp 9001/tcp
-
-# Healthcheck
-HEALTHCHECK --interval=5m --timeout=3s --retries=1 \
-  CMD test $(/opt/datadog-agent/embedded/bin/python /opt/datadog-agent/bin/supervisorctl \
-      -c /etc/dd-agent/supervisor.conf status | awk '{print $2}' | egrep -v 'RUNNING|EXITED' | wc -l) \
-      -eq 0 || exit 1
-
-ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["supervisord", "-n", "-c", "/etc/dd-agent/supervisor.conf"]
