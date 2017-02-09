@@ -1,8 +1,8 @@
-FROM datadog/docker-dd-agent
+FROM datadog/docker-dd-agent:11.0.5110
 MAINTAINER Unif.io, Inc. <support@unif.io>
 
-ENV CONSUL_VERSION=0.7.1
-ENV CONSULTEMPLATE_VERSION=0.16.0
+ENV CONSUL_VERSION=0.7.4
+#ENV CONSULTEMPLATE_VERSION=0.18.1
 
 RUN apt-get update && \
     apt-get -y install curl unzip && \

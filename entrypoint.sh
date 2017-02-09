@@ -3,6 +3,9 @@
 # Get all of the datadog configuration files.
 export TOOLS_PREFIX=/usr/local/bin
 export INTEGRATION_DIR=/etc/dd-agent/conf.d
+
+##### Core config #####
+
 if [[ $DD_API_KEY ]]; then
   export API_KEY=${DD_API_KEY}
 fi
@@ -46,6 +49,13 @@ if [[ $NON_LOCAL_TRAFFIC ]]; then
     sed -i -e 's/^# non_local_traffic:.*$/non_local_traffic: true/' /etc/dd-agent/datadog.conf
 fi
 
+if [[ $STATSD_METRIC_NAMESPACE ]]; then
+    sed -i -e "s/^# statsd_metric_namespace:.*$/statsd_metric_namespace: ${STATSD_METRIC_NAMESPACE}/" /etc/dd-agent/datadog.conf
+fi
+
+
+##### Proxy config #####
+
 if [[ $PROXY_HOST ]]; then
     sed -i -e "s/^# proxy_host:.*$/proxy_host: ${PROXY_HOST}/" /etc/dd-agent/datadog.conf
 fi
@@ -62,12 +72,20 @@ if [[ $PROXY_PASSWORD ]]; then
     sed -i -e "s/^# proxy_password:.*$/proxy_password: ${PROXY_PASSWORD}/" /etc/dd-agent/datadog.conf
 fi
 
+
+##### Service discovery #####
+EC2_HOST_IP=`/opt/datadog-agent/embedded/bin/curl --silent http://169.254.169.254/latest/meta-data/local-ipv4 --max-time 1`
+
 if [[ $SD_BACKEND ]]; then
     sed -i -e "s/^# service_discovery_backend:.*$/service_discovery_backend: ${SD_BACKEND}/" /etc/dd-agent/datadog.conf
 fi
 
 if [[ $SD_CONFIG_BACKEND ]]; then
     sed -i -e "s/^# sd_config_backend:.*$/sd_config_backend: ${SD_CONFIG_BACKEND}/" /etc/dd-agent/datadog.conf
+    # If no SD_BACKEND_HOST value is defined AND running in EC2 and host ip is available
+    if [[ -z $SD_BACKEND_HOST && -n $EC2_HOST_IP ]]; then
+        export SD_BACKEND_HOST="$EC2_HOST_IP"
+    fi
 fi
 
 if [[ $SD_BACKEND_HOST ]]; then
@@ -82,9 +100,12 @@ if [[ $SD_TEMPLATE_DIR ]]; then
     sed -i -e 's@^# sd_template_dir:.*$@sd_template_dir: '${SD_TEMPLATE_DIR}'@' /etc/dd-agent/datadog.conf
 fi
 
-if [[ $STATSD_METRIC_NAMESPACE ]]; then
-    sed -i -e "s/^# statsd_metric_namespace:.*$/statsd_metric_namespace: ${STATSD_METRIC_NAMESPACE}/" /etc/dd-agent/datadog.conf
+if [[ $SD_CONSUL_TOKEN ]]; then
+    sed -i -e 's@^# consul_token:.*$@consul_token: '${SD_CONSUL_TOKEN}'@' /etc/dd-agent/datadog.conf
 fi
+
+
+##### Integrations config #####
 
 if [[ $KUBERNETES || $MESOS_MASTER || $MESOS_SLAVE ]]; then
     # expose supervisord as a health check
@@ -128,6 +149,9 @@ find /conf.d -name '*.yaml' -exec cp --parents {} /etc/dd-agent \;
 
 find /checks.d -name '*.py' -exec cp {} /etc/dd-agent/checks.d \;
 
+
+##### Starting up #####
+
 export PATH="/opt/datadog-agent/embedded/bin:/opt/datadog-agent/bin:$PATH"
 
 if [[ ${CONSUL_PREFIX} && "${ENABLE_INTEGRATIONS}" ]]; then
@@ -139,12 +163,20 @@ if [[ ${CONSUL_PREFIX} && "${ENABLE_INTEGRATIONS}" ]]; then
                     ${TOOLS_PREFIX}/consul kv get "${integration}" > "${INTEGRATION_DIR}"/"${THIS_INTEGRATION}".yaml
                 fi
 			fi
-		done 
+		done
 	fi
 fi
 
 if [[ ${AWS_SECURITY_GROUPS} ]]; then
 	sed -i -r -e "s/^# ?collect_security_groups.*$/collect_security_groups: ${AWS_SECURITY_GROUPS}/" /etc/dd-agent/datadog.conf
+fi
+if [[ -z $DD_HOSTNAME && $DD_APM_ENABLED ]]; then
+        # When starting up the trace-agent without an explicit hostname
+        # we need to ensure that the trace-agent will report as the same host as the
+        # infrastructure agent.
+        # To do this, we execute some of dd-agent's python code and expose the hostname
+        # as an env var
+        export DD_HOSTNAME=`PYTHONPATH=/opt/datadog-agent/agent /opt/datadog-agent/embedded/bin/python -c "from utils.hostname import get_hostname; print get_hostname()"`
 fi
 
 if [[ $DOGSTATSD_ONLY ]]; then
