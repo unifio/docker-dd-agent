@@ -1,6 +1,6 @@
 # Datadog Agent Dockerfile
 
-This repository is a fork of the Datadog Repository for use with consul to obtain integration templates from a consul server KV store. 
+This repository is a fork of the Datadog Repository for use with consul to obtain integration templates from a consul server KV store.
 
 
 ## Quick Start
@@ -37,12 +37,13 @@ By default the agent container will use the `Name` field found in the `docker in
 
 
 ### Environment variables
+**NOTE**: Environment variables can also be set by placing a file named `env_overrides` in the `/conf.d/` directory. The file will be sourced if it exists prior to running the entrypoint.sh.
 
 Some configuration parameters can be changed with environment variables:
-* `ENABLE_INTEGRATIONS` enable consul integration retrieval from KV store for comma separated list of available integrations. To enable `-e ENABLE_INTEGRATIONS=fluentd,consul,process,http_check` 
+* `ENABLE_INTEGRATIONS` enable consul integration retrieval from KV store for comma separated list of available integrations. To enable `-e ENABLE_INTEGRATIONS=fluentd,consul,process,http_check`
 * `CONSUL_PREFIX` sets the KV prefix to use for integration templates when `ENABLE_INTEGRATIONS` is on. Will be used by `consul get kv` inside container to retrieve available integrations that match the values in `ENABLE_INTEGRATIONS` from a consul server in key `integrations`. (Setting example  `-e CONSUL_PREFIX=/config/datadog/prod`)
-* `AWS_SECURITY_GROUPS` enables aws security group tagging. Only valid if ec2 tags are enabled and aws integration is enabled. To enable `-e AWS_SECURITY_GROUPS=yes`. 
-* `CONSUL_HTTP_ADDR` sets the consul server address the default is `127.0.0.1:8500`.   
+* `AWS_SECURITY_GROUPS` enables aws security group tagging. Only valid if ec2 tags are enabled and aws integration is enabled. To enable `-e AWS_SECURITY_GROUPS=yes`.
+* `CONSUL_HTTP_ADDR` sets the consul server address the default is `127.0.0.1:8500`.
 * `DD_HOSTNAME` set the hostname (write it in `datadog.conf`)
 * `TAGS` set host tags. Add `-e TAGS=simple-tag-0,tag-key-1:tag-value-1` to use [simple-tag-0, tag-key-1:tag-value-1] as host tags.
 * `EC2_TAGS` set EC2 host tags. Add `-e EC2_TAGS=yes` to use EC2 custom host tags. Requires an [IAM role](https://github.com/DataDog/dd-agent/wiki/Capturing-EC2-tags-at-startup) associated with the instance.

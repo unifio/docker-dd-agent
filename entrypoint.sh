@@ -1,5 +1,9 @@
 #!/usr/bin/env bash
 #set -e
+## Provide a means of overwriting the environment variables fed by docker
+if [[ -r /conf.d/env_overrides ]]; then
+  . /conf.d/env_overrides
+fi
 # Get all of the datadog configuration files.
 export TOOLS_PREFIX=/usr/local/bin
 export INTEGRATION_DIR=/etc/dd-agent/conf.d
@@ -11,14 +15,14 @@ if [[ $DD_API_KEY ]]; then
 fi
 
 if [[ $API_KEY ]]; then
-	sed -i -e "s/^.*api_key:.*$/api_key: ${API_KEY}/" /etc/dd-agent/datadog.conf
+  sed -i -e "s/^.*api_key:.*$/api_key: ${API_KEY}/" /etc/dd-agent/datadog.conf
 else
-	echo "You must set API_KEY environment variable to run the Datadog Agent container"
-	exit 1
+  echo "You must set API_KEY environment variable to run the Datadog Agent container"
+  exit 1
 fi
 
 if [[ $DD_HOSTNAME ]]; then
-	sed -i -r -e "s/^# ?hostname.*$/hostname: ${DD_HOSTNAME}/" /etc/dd-agent/datadog.conf
+  sed -i -r -e "s/^# ?hostname.*$/hostname: ${DD_HOSTNAME}/" /etc/dd-agent/datadog.conf
 fi
 
 if [[ $DD_TAGS ]]; then
@@ -26,11 +30,11 @@ if [[ $DD_TAGS ]]; then
 fi
 
 if [[ $EC2_TAGS ]]; then
-	sed -i -e "s/^# collect_ec2_tags.*$/collect_ec2_tags: ${EC2_TAGS}/" /etc/dd-agent/datadog.conf
+  sed -i -e "s/^# collect_ec2_tags.*$/collect_ec2_tags: ${EC2_TAGS}/" /etc/dd-agent/datadog.conf
 fi
 
 if [[ $TAGS ]]; then
-	sed -i -r -e "s/^# ?tags:.*$/tags: ${TAGS}/" /etc/dd-agent/datadog.conf
+  sed -i -r -e "s/^# ?tags:.*$/tags: ${TAGS}/" /etc/dd-agent/datadog.conf
 fi
 
 if [[ $DD_LOG_LEVEL ]]; then
@@ -155,20 +159,20 @@ find /checks.d -name '*.py' -exec cp {} /etc/dd-agent/checks.d \;
 export PATH="/opt/datadog-agent/embedded/bin:/opt/datadog-agent/bin:$PATH"
 
 if [[ ${CONSUL_PREFIX} && "${ENABLE_INTEGRATIONS}" ]]; then
-	if ${TOOLS_PREFIX}/consul kv get -keys "${CONSUL_PREFIX}"/integrations/ &>/dev/null; then
-		for integration in $(${TOOLS_PREFIX}/consul kv get -keys "${CONSUL_PREFIX}"/integrations/); do
-			THIS_INTEGRATION=$(echo "${integration}" | awk -F '/' '{print $NF}')
-			if [[ ! -z "${THIS_INTEGRATION}" ]]; then
+  if ${TOOLS_PREFIX}/consul kv get -keys "${CONSUL_PREFIX}"/integrations/ &>/dev/null; then
+    for integration in $(${TOOLS_PREFIX}/consul kv get -keys "${CONSUL_PREFIX}"/integrations/); do
+      THIS_INTEGRATION=$(echo "${integration}" | awk -F '/' '{print $NF}')
+      if [[ ! -z "${THIS_INTEGRATION}" ]]; then
                 if [[ ${ENABLE_INTEGRATIONS} == *"${THIS_INTEGRATION}"* ]]; then
                     ${TOOLS_PREFIX}/consul kv get "${integration}" > "${INTEGRATION_DIR}"/"${THIS_INTEGRATION}".yaml
                 fi
-			fi
-		done
-	fi
+      fi
+    done
+  fi
 fi
 
 if [[ ${AWS_SECURITY_GROUPS} ]]; then
-	sed -i -r -e "s/^# ?collect_security_groups.*$/collect_security_groups: ${AWS_SECURITY_GROUPS}/" /etc/dd-agent/datadog.conf
+  sed -i -r -e "s/^# ?collect_security_groups.*$/collect_security_groups: ${AWS_SECURITY_GROUPS}/" /etc/dd-agent/datadog.conf
 fi
 if [[ -z $DD_HOSTNAME && $DD_APM_ENABLED ]]; then
         # When starting up the trace-agent without an explicit hostname
@@ -181,7 +185,7 @@ fi
 
 if [[ $DOGSTATSD_ONLY ]]; then
         echo "[WARNING] This option is deprecated as of agent 5.8.0, it will be removed in the next few versions. Please use the dogstatsd image instead."
-		PYTHONPATH=/opt/datadog-agent/agent /opt/datadog-agent/embedded/bin/python /opt/datadog-agent/agent/dogstatsd.py
+    PYTHONPATH=/opt/datadog-agent/agent /opt/datadog-agent/embedded/bin/python /opt/datadog-agent/agent/dogstatsd.py
 else
-		exec "$@"
+    exec "$@"
 fi
