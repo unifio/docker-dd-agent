@@ -1,6 +1,6 @@
 machine:
   environment:
-    DOCKER_DD_AGENT_VERSION: 5.10.1.1
+    DOCKER_DD_AGENT_VERSION: 5.11.0.1
   services:
     - docker
 
@@ -10,7 +10,7 @@ dependencies:
   override:
     - docker info
     - if [[ -e ~/docker/image.tar ]]; then docker load --input ~/docker/image.tar; fi
-    - docker build -t unifio/docker-dd-agent .
+    - docker build --rm=false -t unifio/docker-dd-agent .
     - mkdir -p ~/docker
     - docker save unifio/docker-dd-agent > ~/docker/image.tar
 
