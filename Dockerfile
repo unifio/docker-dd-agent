@@ -1,7 +1,7 @@
-FROM datadog/docker-dd-agent:11.0.5110
+FROM datadog/docker-dd-agent:11.0.5112
 MAINTAINER Unif.io, Inc. <support@unif.io>
 
-ENV CONSUL_VERSION=0.7.4
+ENV CONSUL_VERSION=0.7.5
 ENV CONSULTEMPLATE_VERSION=0.18.1
 
 RUN apt-get update && \

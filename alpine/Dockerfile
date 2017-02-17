@@ -2,7 +2,7 @@ FROM datadog/docker-dd-agent:latest-alpine
 MAINTAINER Unif.io, Inc. <support@unif.io>
 
 # This is the release of Consul to pull in.
-ENV CONSUL_VERSION=0.7.4
+ENV CONSUL_VERSION=0.7.5
 ENV CONSULTEMPLATE_VERSION=0.18.1
 
 # This is the release of https://github.com/hashicorp/docker-base to pull in order
