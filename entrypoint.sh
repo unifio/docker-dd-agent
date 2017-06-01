@@ -18,6 +18,10 @@ if [[ $DD_HOSTNAME ]]; then
   sed -i -r -e "s/^# ?hostname.*$/hostname: ${DD_HOSTNAME}/" /etc/dd-agent/datadog.conf
 fi
 
+if [[ $DD_PROCFS_PATH ]]; then
+  sed -i -e 's|^# procfs_path.*$|procfs_path: '"${DD_PROCFS_PATH}"'|' /etc/dd-agent/datadog.conf
+fi
+
 if [[ $DD_TAGS ]]; then
   export TAGS=${DD_TAGS}
 fi
