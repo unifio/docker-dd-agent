@@ -1,12 +1,12 @@
 FROM datadog/docker-dd-agent
 MAINTAINER Unif.io, Inc. <support@unif.io>
 
-LABEL DATADOG_VERSION="11.0.5131"
-LABEL CONSUL_VERSION="0.8.3"
-LABEL CONSULTEMPLATE_VERSION="0.18.3"
+LABEL DATADOG_VERSION="12.3.5172"
+LABEL CONSUL_VERSION="0.9.3"
+LABEL CONSULTEMPLATE_VERSION="0.19.3"
 
-ENV CONSUL_VERSION=0.8.3
-ENV CONSULTEMPLATE_VERSION=0.18.3
+ENV CONSUL_VERSION=0.9.3
+ENV CONSULTEMPLATE_VERSION=0.19.3
 
 RUN apt-get update && \
     apt-get -y install curl unzip && \
@@ -29,6 +29,7 @@ RUN apt-get update && \
     rm -rf /tmp/build
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY config_builder.py /config_builder.py
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["supervisord", "-n", "-c", "/etc/dd-agent/supervisor.conf"]
