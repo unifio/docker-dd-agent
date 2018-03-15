@@ -92,8 +92,11 @@ Some configuration parameters can be changed with environment variables:
    - `SD_BACKEND_USER` and `SD_BACKEND_PASSWORD`: when using etcd as a template source and it requires authentication, set a user and password so the Datadog Agent can connect.
 
 * `DD_APM_ENABLED` run the trace-agent along with the infrastructure agent, allowing the container to accept traces on 8126/tcp (**This option is NOT available on Alpine Images**)
+* `DD_PROCESS_AGENT_ENABLED` run the [process-agent](https://docs.datadoghq.com/graphing/infrastructure/process/) along with the infrastructure agent, feeding data to the Live Process View and Live Containers View (**This option is NOT available on Alpine Images**)
 
-**Note:** it is possible to use `DD_TAGS` instead of `TAGS`, `DD_LOG_LEVEL` instead of `LOG_LEVEL` and `DD_API_KEY` instead of `API_KEY`, these variables have the same impact.
+* `DD_COLLECT_LABELS_AS_TAGS` Enables the collection of the listed labels as tags. Comma separated string, without spaces unless in quotes. Exemple: `-e DD_COLLECT_LABELS_AS_TAGS='com.docker.label.foo, com.docker.label.bar'` or `-e DD_COLLECT_LABELS_AS_TAGS=com.docker.label.foo,com.docker.label.bar`.
+
+**Note:** Some of those have alternative names, but with the same impact: it is possible to use `DD_TAGS` instead of `TAGS`, `DD_LOG_LEVEL` instead of `LOG_LEVEL` and `DD_API_KEY` instead of `API_KEY`.
 
 
 ### Enabling integrations
@@ -144,8 +147,6 @@ Now when the container starts, all files in `/opt/dd-agent-conf.d` with a `.yaml
 
 If you need to run any JMX-based Agent checks, run a [JMX image](https://github.com/DataDog/docker-dd-agent/tree/master/jmx), e.g. `datadog/docker-dd-agent:latest-jmx`, `datadog/docker-dd-agent:11.0.5150-jmx`, etc. These images are based on the default images but add a JVM, which is needed for the Agent to run jmxfetch.
 
-JMX images automatically enable Autodiscovery.
-
 ## DogStatsD
 
 ### Standalone DogStatsD
@@ -155,7 +156,6 @@ The default images (e.g. `latest`) run a DogStatsD server as well as the main Ag
 They also run the DogStatsD server as a non-root user, which is useful for platforms like OpenShift. They also don't need shared volumes from the host (`/proc`, `/sys/fs` and the Docker socket) like the default Agent image.
 
 **Note**: Metrics submitted by this container will NOT get tagged with any global `tags` specified in `datadog.conf`. These tags are only read by the Agent's collector process, which these DogStatsD-only images do not run.
-**Note**: These images run DogStatsD only. In the agent, tags are collected from the configuration file and from labels by the collector which is not running here. Thus those tags will not be associated with any metrics and events processed by this container.
 
 **Note**: Optionally, these images can run the the trace-agent process. Pass `-e DD_APM_ENABLED=true` to your `docker run` command to activate the trace-agent and allow your container to receive traces from Datadog's [APM client libraries](http://docs.datadoghq.com/libraries/#tracing-apm-client-libraries).
 
@@ -171,7 +171,11 @@ DogStatsd can be disabled by setting `USE_DOGSTATSD` to `no`
 
 ### DogStatsD from other containers
 
-#### Using Docker links
+#### Using Docker host IP
+
+Since the Agent container port 8125 should be linked to the host directly, you can connect to DogStatsD through the host. Usually the IP address of the host in a Docker container can be determined by looking at the address of the default route of this container with `ip route` for example. You can then configure your DogStatsD client to connect to `172.17.42.1:8125` for example.
+
+#### Using Docker links (Legacy)
 
 To send data to DogStatsD from other containers, add a `--link dogstatsd:dogstatsd` option to your run command.
 
@@ -186,9 +190,6 @@ docker run  --name my_container           \
 
 DogStatsD address and port will be available in `my_container`'s environment variables `DOGSTATSD_PORT_8125_UDP_ADDR` and `DOGSTATSD_PORT_8125_UDP_PORT`.
 
-#### Using Docker host IP
-
-Since the Agent container port 8125 should be linked to the host directly, you can connect to DogStatsD through the host. Usually the IP address of the host in a Docker container can be determined by looking at the address of the default route of this container with `ip route` for example. You can then configure your DogStatsD client to connect to `172.17.42.1:8125` for example.
 
 ## Tracing + APM
 

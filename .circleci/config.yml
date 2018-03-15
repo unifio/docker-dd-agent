@@ -1,0 +1,59 @@
+common: &common
+  docker:
+    - image: unifio/ci:3.0.412-node-8.9.4
+  environment:
+     DOCKER_DD_AGENT_VERSION: 12.5.5223
+  working_directory: ~/repo
+
+
+version: 2
+jobs:
+  build:
+    <<: *common
+
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker dd-agent
+          command: |
+            echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            docker build -t unifio/docker-dd-agent:${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM} .
+      - run:
+          name: Test dd-agent binaries
+          command: |
+            echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            docker run --entrypoint /usr/local/bin/consul unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" version
+            docker run --entrypoint /usr/local/bin/consul-template unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" --version
+
+  docker_deploy:
+    <<: *common
+
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker dd-agent and test
+          command: |
+            echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            docker build -t unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" .
+            docker run --entrypoint /usr/local/bin/consul unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" version
+            docker run --entrypoint /usr/local/bin/consul-template unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" --version
+      - run:
+          name: Push dd-agent image to docker hub
+          command: |
+            echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            docker push unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}"
+
+workflows:
+  version: 2
+  build_deploy:
+      jobs:
+        - build
+        - docker_deploy:
+            requires:
+              - build
+            filters:
+                branches:
+                  only:
+                    - master
