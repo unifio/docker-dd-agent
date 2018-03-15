@@ -61,6 +61,7 @@ class ConfBuilder(object):
         # The TAGS env variable superseeds DD_TAGS
         self.set_from_env_mapping('DD_TAGS', 'tags')
         self.set_from_env_mapping('TAGS', 'tags')
+        self.set_from_env_mapping('DD_COLLECT_LABELS_AS_TAGS', 'docker_labels_as_tags')
         # The LOG_LEVEL env variable superseeds DD_LOG_LEVEL
         self.set_from_env_mapping('DD_LOG_LEVEL', 'log_level')
         self.set_from_env_mapping('LOG_LEVEL', 'log_level')
@@ -68,6 +69,7 @@ class ConfBuilder(object):
         self.set_from_env_mapping('DD_URL', 'dd_url')
         self.set_from_env_mapping('STATSD_METRIC_NAMESPACE', 'statsd_metric_namespace')
         self.set_from_env_mapping('USE_DOGSTATSD', 'use_dogstatsd')
+        self.set_from_env_mapping('DD_HISTOGRAM_PERCENTILES', 'histogram_percentiles')
         ##### Proxy config #####
         self.set_from_env_mapping('PROXY_HOST', 'proxy_host')
         self.set_from_env_mapping('PROXY_PORT', 'proxy_port')
