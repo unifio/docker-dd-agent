@@ -43,6 +43,7 @@ jobs:
           name: Push dd-agent image to docker hub
           command: |
             echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}"
 
 workflows:
