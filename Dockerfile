@@ -1,4 +1,4 @@
-FROM datadog/docker-dd-agent
+FROM datadog/docker-dd-agent as dd_base
 LABEL maintainer="Unif.io, Inc. <support@unif.io>"
 
 LABEL DATADOG_VERSION="12.5.5223"
