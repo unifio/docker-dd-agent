@@ -7,7 +7,7 @@ LABEL CONSULTEMPLATE_VERSION="0.19.4"
 
 ENV CONSUL_VERSION=1.0.6
 ENV CONSULTEMPLATE_VERSION=0.19.4
-ENV HASHI_KEY=91A6E7F85D05C65630BEF18951852D87348FFC4C
+ENV HASHI_KEY_URL https://keybase.io/hashicorp/key.asc
 
 ADD https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_linux_amd64.zip consul_${CONSUL_VERSION}_linux_amd64.zip
 ADD https://releases.hashicorp.com/consul/${CONSUL_VERSION}/consul_${CONSUL_VERSION}_SHA256SUMS consul_${CONSUL_VERSION}_SHA256SUMS
@@ -20,7 +20,7 @@ ADD https://releases.hashicorp.com/consul-template/${CONSULTEMPLATE_VERSION}/con
 RUN mkdir -p usr/local/bin \
   && apt-get update \
   && apt-get install -y gpg unzip \
-  && gpg --keyserver keys.gnupg.net --receive-keys $HASHI_KEY \
+  && curl $HASHI_KEY_URL | gpg --import \
   && gpg --batch --verify consul_${CONSUL_VERSION}_SHA256SUMS.sig consul_${CONSUL_VERSION}_SHA256SUMS \
   && grep consul_${CONSUL_VERSION}_linux_amd64.zip consul_${CONSUL_VERSION}_SHA256SUMS | sha256sum -c \
   && unzip -d usr/local/bin consul_${CONSUL_VERSION}_linux_amd64.zip \
