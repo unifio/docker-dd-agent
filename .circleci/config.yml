@@ -5,6 +5,12 @@ common: &common
      DOCKER_DD_AGENT_VERSION: 12.5.5223
   working_directory: ~/repo
 
+commonV6: &commonV6
+  docker:
+    - image: unifio/ci:3.0.412-node-8.9.4
+  environment:
+     DOCKER_DD_AGENT_VERSION: 6.0.3
+  working_directory: ~/repo
 
 version: 2
 jobs:
@@ -23,6 +29,25 @@ jobs:
           name: Test dd-agent binaries
           command: |
             echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            docker run --entrypoint /usr/local/bin/consul unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" version
+            docker run --entrypoint /usr/local/bin/consul-template unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" --version
+  buildV6:
+    <<: *commonV6
+
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker datadog-agent
+          command: |
+            echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            cd v6agent/
+            docker build -t unifio/docker-dd-agent:${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM} .
+      - run:
+          name: Test datadog-agent binaries
+          command: |
+            echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            cd v6agent/
             docker run --entrypoint /usr/local/bin/consul unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" version
             docker run --entrypoint /usr/local/bin/consul-template unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" --version
 
@@ -45,6 +70,27 @@ jobs:
             echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
             docker login -u $DOCKER_USER -p $DOCKER_PASS
             docker push unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}"
+  docker_deployV6:
+    <<: *commonV6
+
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build Docker datadog-agent and test
+          command: |
+            echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            cd v6agent/
+            docker build -t unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" .
+            docker run --entrypoint /usr/local/bin/consul unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" version
+            docker run --entrypoint /usr/local/bin/consul-template unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}" --version
+      - run:
+          name: Push datadog-agent image to docker hub
+          command: |
+            cd v6agent/
+            echo "Tag: ${DOCKER_DD_AGENT_VERSION}.${CIRCLE_BUILD_NUM}"
+            docker login -u $DOCKER_USER -p $DOCKER_PASS
+            docker push unifio/docker-dd-agent:"${DOCKER_DD_AGENT_VERSION}"."${CIRCLE_BUILD_NUM}"
 
 workflows:
   version: 2
@@ -54,6 +100,14 @@ workflows:
         - docker_deploy:
             requires:
               - build
+            filters:
+                branches:
+                  only:
+                    - master
+        - buildV6
+        - docker_deployV6:
+            requires:
+              - buildV6
             filters:
                 branches:
                   only:
