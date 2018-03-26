@@ -1,7 +1,7 @@
 FROM datadog/agent as dd_base
 LABEL maintainer="Unif.io, Inc. <support@unif.io>"
 
-LABEL DATADOG_VERSION="6.0.3"
+LABEL DATADOG_VERSION="6.1.0"
 LABEL CONSUL_VERSION="1.0.6"
 LABEL CONSULTEMPLATE_VERSION="0.19.4"
 
