@@ -1,7 +1,7 @@
 FROM datadog/agent as dd_base
 LABEL maintainer="Unif.io, Inc. <support@unif.io>"
 
-LABEL DATADOG_VERSION="6.0.3"
+LABEL DATADOG_VERSION="6.1.0"
 LABEL CONSUL_VERSION="1.0.6"
 LABEL CONSULTEMPLATE_VERSION="0.19.4"
 
@@ -49,7 +49,7 @@ COPY init-stage3 /etc/s6/init/init-stage3
 # - Remove the /var/run -> /run symlink and create a legit /var/run folder
 # as some docker versions re-create /run from zero at container start
 RUN adduser --system --no-create-home --disabled-password --ingroup root dd-agent \
- && rm /var/run && mkdir -p /var/run/s6 \
+ && rm -rf /var/run && mkdir -p /var/run/s6 \
  && chown -R dd-agent:root /etc/datadog-agent/ /etc/s6/ /var/run/s6/ /var/log/datadog/ \
  && chmod g+r,g+w,g+X -R /etc/datadog-agent/ /etc/s6/ /var/run/s6/ /var/log/datadog/ \
  && chmod 755 /probe.sh /initlog.sh
