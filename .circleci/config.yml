@@ -9,7 +9,7 @@ commonV6: &commonV6
   docker:
     - image: unifio/ci:3.0.412-node-8.9.4
   environment:
-     DOCKER_DD_AGENT_VERSION: 6.0.3
+     DOCKER_DD_AGENT_VERSION: 6.1.0
   working_directory: ~/repo
 
 version: 2
