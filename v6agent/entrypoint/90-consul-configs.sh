@@ -20,7 +20,8 @@ if [[ ${CONSUL_PREFIX} && ${ENABLE_INTEGRATIONS} ]]; then
   fi
 fi
 
-# Enable logs
-if [[ $DD_ENABLE_LOGS ]]; then
-  echo -e "\n# Logs\nlog_enabled: true" | tee -a /etc/datadog-agent/datadog.yaml
+# Enable Forcing ECS Hostname
+if [[ $DD_ECS_SET_HOSTNAME ]]; then
+  SOCKET_HOSTNAME_FQDN=$(hostname -s)
+  echo -e "\n# Force Hostnamae\nhostname: ${SOCKET_HOSTNAME_FQDN}" | tee -a /etc/datadog-agent/datadog.yaml
 fi
